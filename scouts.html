@@ -40,9 +40,16 @@
 		mercado.atletas.map(normalizeAtletas);
 		var dynatable = $('#table_id').dynatable({dataset: { records: mercado.atletas }});
 		var dynatable_data = dynatable.data('dynatable');
+        
+		$.each(mercado.status,function(index, value){
+			$('#search-status').append($('<option>', {
+				value: value.id,
+				text : value.nome
+			}));
+		});
 
-		//Criando select para filtro de status dos atletas
-		var searchStatus = $('#search-status');
+        //Criando select para filtro de status dos atletas
+        var searchStatus = $('#search-status');
         searchStatus.change( function() {
             var value = $(this).val();
             if (value === "0") {
@@ -51,26 +58,20 @@
                 dynatable_data.queries.add("status_id",value);
             }
             dynatable_data.process();
-		});
-        searchStatus.val(STATUS.PROVAVEL);
-        searchStatus.trigger("change");
+        });
 
-		$.each(mercado.status,function(index, value){
-			$('#search-status').append($('<option>', {
-				value: value.id,
-				text : value.nome
-			}));
-		});
+		searchStatus.val(STATUS.PROVAVEL);
+		searchStatus.trigger("change");
 
 		 //Criando select para filtro de clube dos atletas
 		$('#search-clube-id').change( function() {
-            var value = $(this).val();
-            if (value === "0") {
-                dynatable_data.queries.remove("clube_id");
-            } else {
-                dynatable_data.queries.add("clube_id",value);
-            }
-            dynatable_data.process();
+		    var value = $(this).val();
+		    if (value === "0") {
+			    dynatable_data.queries.remove("clube_id");
+		    } else {
+			    dynatable_data.queries.add("clube_id",value);
+		    }
+		    dynatable_data.process();
 		});
 
 		$.each(mercado.clubes,function(index, value){
@@ -85,10 +86,10 @@
 		};
 
 		$('#search-preco-minimo').change( function() {
-            var value = $(this).val();
-            if(value) dynatable_data.queries.add("preco_minimo",value);
-            else dynatable_data.queries.remove("preco_minimo");
-            dynatable_data.process();
+		    var value = $(this).val();
+		    if(value) dynatable_data.queries.add("preco_minimo",value);
+		    else dynatable_data.queries.remove("preco_minimo");
+		    dynatable_data.process();
 		});
 
 		dynatable_data.queries.functions['preco_maximo'] = function(record, queryValue) {
