@@ -18,23 +18,22 @@
 	var SCOUTS = ["RB","FC","GC","CA","CV","SG","DD","DP","GS","FS","PE","A","FT","FD","FF","G","I","PP"];
 
 	function normalizeAtletas(atleta) {
+        //Se atleta não possui Scout faz scout = 0
+        SCOUTS.forEach(function(scout){
+            if(!atleta.scout[scout]) atleta.scout[scout] = 0;
+            atleta[scout] = atleta.scout[scout];
+        });
 
-			//Se atleta não possui Scout faz scout = 0
-			SCOUTS.forEach(function(scout){ 
-				if(!atleta.scout[scout]) atleta.scout[scout] = 0;
-				atleta[scout] = atleta.scout[scout]; 
-			});
-		
-			//Traduz o status id do atleta para o nome do status
-			atleta.status = mercado.status[atleta.status_id].nome;
-		
-			//Traduz o clube id do atleta para a sigla do clube
-			atleta.clube = mercado.clubes[atleta.clube_id].abreviacao;
-		
-			//Traduz o posicao id do atleta para o nome da posição
-			atleta.posicao = mercado.posicoes[atleta.posicao_id].nome;
-		
-			return atleta;
+        //Traduz o status id do atleta para o nome do status
+        atleta.status = mercado.status[atleta.status_id].nome;
+
+        //Traduz o clube id do atleta para a sigla do clube
+        atleta.clube = mercado.clubes[atleta.clube_id].abreviacao;
+
+        //Traduz o posicao id do atleta para o nome da posição
+        atleta.posicao = mercado.posicoes[atleta.posicao_id].nome;
+
+        return atleta;
 	}
 
 	$(document).ready( function () {
@@ -45,14 +44,16 @@
 		//Criando select para filtro de status dos atletas
 		var searchStatus = $('#search-status');
         searchStatus.change( function() {
-		  var value = $(this).val();
-		  if (value === "0") {
-			dynatable_data.queries.remove("status_id");
-		  } else {
-			dynatable_data.queries.add("status_id",value);
-		  }
-		  dynatable_data.process();
+            var value = $(this).val();
+            if (value === "0") {
+                dynatable_data.queries.remove("status_id");
+            } else {
+                dynatable_data.queries.add("status_id",value);
+            }
+            dynatable_data.process();
 		});
+        searchStatus.val(STATUS.PROVAVEL);
+        searchStatus.trigger("change");
 
 		$.each(mercado.status,function(index, value){
 			$('#search-status').append($('<option>', {
@@ -60,18 +61,16 @@
 				text : value.nome
 			}));
 		});
-		searchStatus.val(STATUS.PROVAVEL);
-		searchStatus.trigger("change");
 
 		 //Criando select para filtro de clube dos atletas
 		$('#search-clube-id').change( function() {
-		  var value = $(this).val();
-		  if (value === "0") {
-			dynatable_data.queries.remove("clube_id");
-		  } else {
-			dynatable_data.queries.add("clube_id",value);
-		  }
-		  dynatable_data.process();
+            var value = $(this).val();
+            if (value === "0") {
+                dynatable_data.queries.remove("clube_id");
+            } else {
+                dynatable_data.queries.add("clube_id",value);
+            }
+            dynatable_data.process();
 		});
 
 		$.each(mercado.clubes,function(index, value){
@@ -86,10 +85,10 @@
 		};
 
 		$('#search-preco-minimo').change( function() {
-		  var value = $(this).val();
-		  if(value) dynatable_data.queries.add("preco_minimo",value);
-		  else dynatable_data.queries.remove("preco_minimo");
-		  dynatable_data.process();
+            var value = $(this).val();
+            if(value) dynatable_data.queries.add("preco_minimo",value);
+            else dynatable_data.queries.remove("preco_minimo");
+            dynatable_data.process();
 		});
 
 		dynatable_data.queries.functions['preco_maximo'] = function(record, queryValue) {
@@ -97,10 +96,10 @@
 		};
 
 		$('#search-preco-maximo').change( function() {
-		  var value = $(this).val();
-		  if(value) dynatable_data.queries.add("preco_maximo",value);
-		  else dynatable_data.queries.remove("preco_maximo");
-		  dynatable_data.process();
+		    var value = $(this).val();
+		    if(value) dynatable_data.queries.add("preco_maximo",value);
+		    else dynatable_data.queries.remove("preco_maximo");
+		    dynatable_data.process();
 		});
 	});
 	</script>
