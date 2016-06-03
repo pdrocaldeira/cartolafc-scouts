@@ -1,20 +1,11 @@
 <html>
-
 <head>
 	<meta charset="utf-8"/>
-
-	<script type="text/javascript" charset="utf8"
-	src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
-
-	<script type="text/javascript" charset="utf8"
-	src="https://cdnjs.cloudflare.com/ajax/libs/Dynatable/0.3.1/jquery.dynatable.js"></script>
-
-	<link rel="stylesheet" type="text/css"
-	href="https://cdnjs.cloudflare.com/ajax/libs/Dynatable/0.3.1/jquery.dynatable.css">	
-	
+	<script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/Dynatable/0.3.1/jquery.dynatable.js"></script>
+	<script type="text/javascript" charset="utf8" src="./mercado.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Dynatable/0.3.1/jquery.dynatable.css">
 	<script type="text/javascript">
-
-	var parsed_json_data;
 
 	var STATUS = {
 		    DUVIDA    : 2,
@@ -22,7 +13,7 @@
 		    CONTUDIDO : 5,
 		    NULO      : 6,
 		    PROVAVEL  : 7
-	}
+	};
 
 	var SCOUTS = ["RB","FC","GC","CA","CV","SG","DD","DP","GS","FS","PE","A","FT","FD","FF","G","I","PP"];
 
@@ -35,168 +26,135 @@
 			});
 		
 			//Traduz o status id do atleta para o nome do status
-			atleta.status = parsed_json_data.responseJSON.status[atleta.status_id].nome;
+			atleta.status = mercado.status[atleta.status_id].nome;
 		
 			//Traduz o clube id do atleta para a sigla do clube
-			atleta.clube = parsed_json_data.responseJSON.clubes[atleta.clube_id].abreviacao;
+			atleta.clube = mercado.clubes[atleta.clube_id].abreviacao;
 		
 			//Traduz o posicao id do atleta para o nome da posição
-			atleta.posicao = parsed_json_data.responseJSON.posicoes[atleta.posicao_id].nome;
+			atleta.posicao = mercado.posicoes[atleta.posicao_id].nome;
 		
 			return atleta;
 	}
 
-	function provavel(atleta) { 
-		return atleta.status_id === STATUS.PROVAVEL; 
-	}
-	function jaFoiEscalado(atleta) { return atleta.nrJogos > 0; }
-
-	function calculaCustoBeneficioMedio(atletas) {
-		    var custoTotal = 0;
-		    var mediaTotal = 0;
-		    atletas.forEach(function(atleta) {
-		            custoTotal += atleta.preco;
-		            mediaTotal += atleta.media;
-		    });
-
-		    return mediaTotal / custoTotal;
-	}	
-
 	$(document).ready( function () {
-		parsed_json_data = $.getJSON("http://localhost:8000/mercado2.json");
-		parsed_json_data.done(function(data) {
-		    var json = data;
-		    var atletas = json.atletas;
-		    var atletasProvaveis = atletas.map(normalizeAtletas).filter(provavel);
-		    var atletasProvaveisNaoEstreantes = atletasProvaveis.filter(jaFoiEscalado);
+		mercado.atletas.map(normalizeAtletas);
+		var dynatable = $('#table_id').dynatable({dataset: { records: mercado.atletas }});
+		var dynatable_data = dynatable.data('dynatable');
 
-		    var custoBeneficioMedio = calculaCustoBeneficioMedio(atletasProvaveisNaoEstreantes);		    		  
-
-			var dynatable = $('#table_id').dynatable({
-				dataset: {
-					records: data.atletas
-		  		}
-	  		});
-	  		
-	  		var dynatable_data = dynatable.data('dynatable');
-	  		
-		    //Criando select para filtro de status dos atletas
-	  		$('#search-status').change( function() {
-			  var value = $(this).val();
-			  if (value === "0") {
-				dynatable_data.queries.remove("status_id");
-			  } else {
-				dynatable_data.queries.add("status_id",value);
-			  }
-			  dynatable_data.process();
-			});
-			
-		    $.each(data.status,function(index, value){
-		    	$('#search-status').append($('<option>', { 
-					value: value.id,
-					text : value.nome 
-				}));
-			});
-			$('#search-status').val(STATUS.PROVAVEL);
-			$('#search-status').trigger("change");
-			
-			 //Criando select para filtro de clube dos atletas
-	  		$('#search-clube-id').change( function() {
-			  var value = $(this).val();
-			  if (value === "0") {
-				dynatable_data.queries.remove("clube_id");
-			  } else {
-				dynatable_data.queries.add("clube_id",value);
-			  }
-			  dynatable_data.process();
-			});
-			
-		    $.each(data.clubes,function(index, value){
-		    	$('#search-clube-id').append($('<option>', { 
-					value: value.id,
-					text : value.nome 
-				}));
-			});	
-			
-			dynatable_data.queries.functions['preco_minimo'] = function(record, queryValue) {
-      			return parseFloat(record.preco_num) >= parseFloat(queryValue);
-    		};
-			
-			$('#search-preco-minimo').change( function() {
-			  var value = $(this).val();
-			  if(value) dynatable_data.queries.add("preco_minimo",value);
-			  else dynatable_data.queries.remove("preco_minimo");
-			  dynatable_data.process();
-			}); 
-			
-			dynatable_data.queries.functions['preco_maximo'] = function(record, queryValue) {
-      			return parseFloat(record.preco_num) <= parseFloat(queryValue);
-    		};
-    		
-    		$('#search-preco-maximo').change( function() {
-			  var value = $(this).val();
-			  if(value) dynatable_data.queries.add("preco_maximo",value);
-			  else dynatable_data.queries.remove("preco_maximo");
-			  dynatable_data.process();
-			}); 		
-		    
+		//Criando select para filtro de status dos atletas
+		var searchStatus = $('#search-status');
+        searchStatus.change( function() {
+		  var value = $(this).val();
+		  if (value === "0") {
+			dynatable_data.queries.remove("status_id");
+		  } else {
+			dynatable_data.queries.add("status_id",value);
+		  }
+		  dynatable_data.process();
 		});
-	   	
+
+		$.each(mercado.status,function(index, value){
+			$('#search-status').append($('<option>', {
+				value: value.id,
+				text : value.nome
+			}));
+		});
+		searchStatus.val(STATUS.PROVAVEL);
+		searchStatus.trigger("change");
+
+		 //Criando select para filtro de clube dos atletas
+		$('#search-clube-id').change( function() {
+		  var value = $(this).val();
+		  if (value === "0") {
+			dynatable_data.queries.remove("clube_id");
+		  } else {
+			dynatable_data.queries.add("clube_id",value);
+		  }
+		  dynatable_data.process();
+		});
+
+		$.each(mercado.clubes,function(index, value){
+			$('#search-clube-id').append($('<option>', {
+				value: value.id,
+				text : value.nome
+			}));
+		});
+
+		dynatable_data.queries.functions['preco_minimo'] = function(record, queryValue) {
+			return parseFloat(record.preco_num) >= parseFloat(queryValue);
+		};
+
+		$('#search-preco-minimo').change( function() {
+		  var value = $(this).val();
+		  if(value) dynatable_data.queries.add("preco_minimo",value);
+		  else dynatable_data.queries.remove("preco_minimo");
+		  dynatable_data.process();
+		});
+
+		dynatable_data.queries.functions['preco_maximo'] = function(record, queryValue) {
+			return parseFloat(record.preco_num) <= parseFloat(queryValue);
+		};
+
+		$('#search-preco-maximo').change( function() {
+		  var value = $(this).val();
+		  if(value) dynatable_data.queries.add("preco_maximo",value);
+		  else dynatable_data.queries.remove("preco_maximo");
+		  dynatable_data.process();
+		});
 	});
 	</script>
 
 </head>
 <body>
-		<label for="search-status">Status</label>
-		<select id="search-status" name="status">
-		  <option value="0">Todos</option>
-		</select>
-		<label for="search-clube-id">Clube</label>
-		<select id="search-clube-id" name="clube_id">
-		  <option value="0">Todos</option>
-		</select>
-		<label for="search-preco-minimo">Preço Mínimo</label>
-		<input id='search-preco-minimo' type='text' size='3' maxlength='3'/>
-		<label for="search-preco-maximo">Preço Máximo</label>
-		<input id='search-preco-maximo' type='text' size='3' maxlength='3'/>
-        <table id="table_id">
-                <thead>
-                        <tr>
-                        		<th data-dynatable-column="clube">Clube</th>
-                                <th data-dynatable-column="apelido">Nome</th>
-                                <th data-dynatable-column="posicao">Posição</th>
-                                <th data-dynatable-column="preco_num">Preço</th>
-                                <th data-dynatable-column="variacao_num">Variação</th>
-                                <th data-dynatable-column="media_num">Media</th>
-                                <th data-dynatable-column="RB">RB</th>
-                                <th data-dynatable-column="FC">FC</th>
-                                <th data-dynatable-column="GC">GC</th>
-                                <th data-dynatable-column="CA">CA</th>
-                                <th data-dynatable-column="CV">CV</th>
-                                <th data-dynatable-column="SG">SG</th>
-                                <th data-dynatable-column="DD">DD</th>
-                                <th data-dynatable-column="DP">DP</th>
-                                <th data-dynatable-column="GS">GS</th>
-                                <th data-dynatable-column="FS">FS</th>
-                                <th data-dynatable-column="PE">PE</th>
-                                <th data-dynatable-column="A">A</th>
-                                <th data-dynatable-column="FT">FT</th>
-                                <th data-dynatable-column="FD">FD</th>
-                                <th data-dynatable-column="FF">FF</th>
-                                <th data-dynatable-column="G">G</th>
-                                <th data-dynatable-column="I">I</th>
-                                <th data-dynatable-column="PP">PP</th>
-								<th data-dynatable-column="status">Status</th>
-								<th style="display: none" data-dynatable-column="status_id">Status ID</th>
-								<th style="display: none" data-dynatable-column="clube_id">Clube ID</th>
-
-                        </tr>
-                </thead>
-                <tbody>  
-  
-                </tbody>
-        </table>
-
+	<label for="search-status">Status</label>
+	<select id="search-status" name="status">
+	  <option value="0">Todos</option>
+	</select>
+	<label for="search-clube-id">Clube</label>
+	<select id="search-clube-id" name="clube_id">
+	  <option value="0">Todos</option>
+	</select>
+	<label for="search-preco-minimo">Preço Mínimo</label>
+	<input id='search-preco-minimo' type='text' size='3' maxlength='3'/>
+	<label for="search-preco-maximo">Preço Máximo</label>
+	<input id='search-preco-maximo' type='text' size='3' maxlength='3'/>
+	<table id="table_id">
+		<thead>
+			<tr>
+				<th data-dynatable-column="clube">Clube</th>
+				<th data-dynatable-column="apelido">Nome</th>
+				<th data-dynatable-column="jogos_num">Jogos</th>
+				<th data-dynatable-column="posicao">Posição</th>
+				<th data-dynatable-column="preco_num">Preço</th>
+				<th data-dynatable-column="variacao_num">Variação</th>
+				<th data-dynatable-column="media_num">Media</th>
+				<th data-dynatable-column="RB">RB</th>
+				<th data-dynatable-column="FC">FC</th>
+				<th data-dynatable-column="GC">GC</th>
+				<th data-dynatable-column="CA">CA</th>
+				<th data-dynatable-column="CV">CV</th>
+				<th data-dynatable-column="SG">SG</th>
+				<th data-dynatable-column="DD">DD</th>
+				<th data-dynatable-column="DP">DP</th>
+				<th data-dynatable-column="GS">GS</th>
+				<th data-dynatable-column="FS">FS</th>
+				<th data-dynatable-column="PE">PE</th>
+				<th data-dynatable-column="A">A</th>
+				<th data-dynatable-column="FT">FT</th>
+				<th data-dynatable-column="FD">FD</th>
+				<th data-dynatable-column="FF">FF</th>
+				<th data-dynatable-column="G">G</th>
+				<th data-dynatable-column="I">I</th>
+				<th data-dynatable-column="PP">PP</th>
+				<th data-dynatable-column="status">Status</th>
+				<th style="display: none" data-dynatable-column="status_id">Status ID</th>
+				<th style="display: none" data-dynatable-column="clube_id">Clube ID</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
 </body>
 </html>
 
