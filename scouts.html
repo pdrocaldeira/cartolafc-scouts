@@ -38,9 +38,14 @@
 
 	$(document).ready( function () {
 		mercado.atletas.map(normalizeAtletas);
-		var dynatable = $('#table_id').dynatable({dataset: { records: mercado.atletas }});
+		var dynatable = $('#table_id').dynatable({
+            dataset: { records: mercado.atletas },
+            features: {
+                pushState: document.location.protocol === 'http'
+            }
+        });
 		var dynatable_data = dynatable.data('dynatable');
-        
+
 		$.each(mercado.status,function(index, value){
 			$('#search-status').append($('<option>', {
 				value: value.id,
